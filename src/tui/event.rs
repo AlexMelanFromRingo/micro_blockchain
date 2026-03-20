@@ -26,5 +26,10 @@ pub fn toggle_mining(key: &KeyEvent) -> bool {
 }
 
 pub fn next_tab(key: &KeyEvent) -> bool {
-    matches!(key.code, KeyCode::Tab)
+    key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::SHIFT)
+}
+
+pub fn prev_tab(key: &KeyEvent) -> bool {
+    key.code == KeyCode::BackTab
+        || (key.code == KeyCode::Tab && key.modifiers.contains(KeyModifiers::SHIFT))
 }

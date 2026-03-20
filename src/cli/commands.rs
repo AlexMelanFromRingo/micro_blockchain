@@ -190,7 +190,9 @@ async fn run_tui(
                         let state = if app.mining { "ON" } else { "OFF" };
                         app.logs.push(format!("Mining: {state}"));
                     } else if crate::tui::event::next_tab(&key) {
-                        app.selected_tab = (app.selected_tab + 1) % 4;
+                        app.next_tab();
+                    } else if crate::tui::event::prev_tab(&key) {
+                        app.prev_tab();
                     }
                 }
                 crate::tui::event::AppEvent::Tick => {}
