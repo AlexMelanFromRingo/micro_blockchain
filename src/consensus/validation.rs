@@ -163,7 +163,7 @@ mod tests {
     use crate::types::block::BlockHeader;
     use crate::types::transaction::{Transaction, TxInput, TxOutput};
 
-    fn make_test_block(utxo_set: &HashMap<OutPoint, TxOutput>, height: u32) -> Block {
+    fn make_test_block(_utxo_set: &HashMap<OutPoint, TxOutput>, height: u32) -> Block {
         let recipient = [0xABu8; 20];
         let reward = pow::block_reward(height);
         let coinbase = Transaction::new_coinbase(reward, recipient, height);
@@ -174,7 +174,7 @@ mod tests {
             prev_hash: [0u8; 32],
             merkle_root: merkle,
             timestamp: 1000,
-            difficulty: 1,
+            difficulty: pow::MIN_DIFFICULTY, // very easy
             nonce: 0,
         };
         pow::mine(&mut header);
@@ -196,7 +196,8 @@ mod tests {
     fn test_validate_block_bad_pow() {
         let utxo_set = HashMap::new();
         let mut block = make_test_block(&utxo_set, 0);
-        block.header.difficulty = 200; // impossibly hard
+        // Set an impossibly hard target: exp=1, mantissa=1 → target ~ 0x000...01
+        block.header.difficulty = 0x0100_0001;
         assert!(matches!(
             validate_block(&block, &utxo_set, 0),
             Err(ValidationError::InvalidPow)
