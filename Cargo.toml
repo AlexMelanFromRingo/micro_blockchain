@@ -1,0 +1,31 @@
+[package]
+name = "micro_blockchain"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+blake3 = "1.8"
+k256 = { version = "0.13", features = ["ecdsa"] }
+serde = { version = "1", features = ["derive"] }
+bincode = "1"
+bech32 = "0.11"
+sled = "0.34"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "macros", "sync", "time"] }
+ratatui = "0.29"
+crossterm = "0.28"
+clap = { version = "4", features = ["derive"] }
+rand = "0.8"
+hex = "0.4"
+thiserror = "2"
+serde-big-array = "0.5"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+elliptic-curve = { version = "0.13", features = ["sec1"] }
+signature = "2"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
