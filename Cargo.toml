@@ -2,6 +2,9 @@
 name = "micro_blockchain"
 version = "0.1.0"
 edition = "2024"
+description = "Minimal UTXO blockchain with BLAKE3, secp256k1, and LWMA difficulty adjustment"
+license = "MIT"
+repository = "https://github.com/AlexMelanFromRingo/micro_blockchain"
 
 [dependencies]
 blake3 = "1.8"
