@@ -11,7 +11,7 @@ use crate::chain::mempool::Mempool;
 use crate::consensus::pow;
 use crate::crypto::hash;
 use crate::network::server::Server;
-use crate::network::sync_manager::SyncManager;
+use crate::network::sync_manager::{SyncManager, NodeEvent};
 use crate::tui::app::App;
 use crate::types::block::{Block, BlockHeader};
 use crate::types::transaction::Transaction;
@@ -117,12 +117,16 @@ async fn run_node(
     let (event_tx, event_rx) = mpsc::unbounded_channel();
 
     let listen_addr: SocketAddr = format!("0.0.0.0:{port}").parse()?;
-    let sync = Arc::new(SyncManager::new(
+    let (sm, discovery_rx) = SyncManager::with_discovery(
         chain.clone(),
         mempool.clone(),
         port,
         event_tx,
-    ));
+    );
+    let sync = Arc::new(sm);
+
+    // Background task: connect to peers discovered via Peers messages
+    sync.spawn_discovery_loop(discovery_rx);
 
     // Start server
     let server = Server::new(listen_addr, sync.clone());
@@ -132,7 +136,7 @@ async fn run_node(
         }
     });
 
-    // Connect to initial peers
+    // Connect to initial peers, or fall back to seed nodes
     if let Some(peer_list) = peers {
         for addr_str in peer_list.split(',') {
             if let Ok(addr) = addr_str.trim().parse::<SocketAddr>() {
@@ -144,6 +148,9 @@ async fn run_node(
                 });
             }
         }
+    } else {
+        // No explicit peers — try seed nodes for discovery
+        sync.connect_to_seeds().await;
     }
 
     // Load wallet if provided
@@ -162,7 +169,7 @@ async fn run_tui(
     mempool: Arc<RwLock<Mempool>>,
     sync: Arc<SyncManager>,
     wallet: Option<Wallet>,
-    event_rx: mpsc::UnboundedReceiver<crate::network::sync_manager::NodeEvent>,
+    event_rx: mpsc::UnboundedReceiver<NodeEvent>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use crossterm::{execute, terminal};
     use ratatui::backend::CrosstermBackend;
